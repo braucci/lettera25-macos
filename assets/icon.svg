@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Icona Olivetti Lettera 25 — formato macOS Big Sur+ (squircle).
+
+  Note di design:
+
+  1) Squircle Apple: usiamo una curva tipo "superellisse" approssimata
+     da un path con corner radius modulato. Big Sur usa un "continuous
+     corner" (G2) piu' morbido del rettangolo arrotondato classico.
+     L'approssimazione qui sotto e' visivamente fedele.
+
+  2) Margine di sicurezza: il sistema macOS applica una maschera
+     squircle al contenuto. Lasciamo ~10% di padding interno cosi'
+     anche con la maschera nulla del nostro disegno viene tagliato.
+
+  3) Leggibilita' a 32 px (principio della segnaletica): a quella
+     dimensione si distinguono solo il rullo nero, il foglio bianco
+     e la sagoma del corpo. Il logo "L 25" e i singoli tasti vanno
+     persi: e' OK, sono "dettagli da vicino".
+
+  4) Palette: avorio caldo (#EFE6D2) per il corpo, come la Lettera 25
+     reale. Niente sfondo grigio scuro come prima: usiamo un degrade'
+     che valorizza la macchina.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 1024 1024"
+     width="1024" height="1024">
+
+  <defs>
+    <!-- Squircle path: superellisse con curve G2 (continuous corner) -->
+    <clipPath id="squircle">
+      <!--
+        Approssimazione di una squircle Apple via path Bezier cubico.
+        Per ogni angolo: due "handle" che si estendono oltre il punto
+        del bordo, generando una curva piu' morbida del classico arc.
+        Parametri calibrati per matchare le icone macOS Big Sur+.
+      -->
+      <path d="
+        M 232 0
+        L 792 0
+        C 880 0, 944 16, 984 56
+        C 1008 96, 1024 144, 1024 232
+        L 1024 792
+        C 1024 880, 1008 928, 984 968
+        C 944 1008, 880 1024, 792 1024
+        L 232 1024
+        C 144 1024, 96 1008, 56 984
+        C 16 944, 0 880, 0 792
+        L 0 232
+        C 0 144, 16 96, 40 56
+        C 80 16, 144 0, 232 0
+        Z"/>
+    </clipPath>
+
+    <!-- Sfondo: blu-grigio scuro che fa risaltare la macchina avorio -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#3D4754"/>
+      <stop offset="100%" stop-color="#1F2530"/>
+    </linearGradient>
+
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#F2E9D5"/>
+      <stop offset="100%" stop-color="#D4C6A4"/>
+    </linearGradient>
+
+    <linearGradient id="paperGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F0EAD8"/>
+    </linearGradient>
+
+    <radialGradient id="platenGrad" cx="0.5" cy="0.35" r="0.7">
+      <stop offset="0%"   stop-color="#454545"/>
+      <stop offset="100%" stop-color="#1A1A1A"/>
+    </radialGradient>
+
+    <radialGradient id="keyGrad" cx="0.4" cy="0.3" r="0.7">
+      <stop offset="0%"   stop-color="#FAFAFA"/>
+      <stop offset="100%" stop-color="#BDB29A"/>
+    </radialGradient>
+
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10"/>
+      <feOffset dx="0" dy="8"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Tutto il contenuto e' clippato dalla squircle: anche se sfora,
+       viene mascherato. Cosi' eventuali bug non rompono la forma. -->
+  <g clip-path="url(#squircle)">
+
+    <!-- Sfondo squircle -->
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#bgGrad)"/>
+
+    <!-- Margine di sicurezza interno: contenuto centrato in ~820 px -->
+    <g transform="translate(102, 110)">
+
+      <!-- Foglio bianco con righe di testo -->
+      <g filter="url(#dropShadow)">
+        <rect x="146" y="0" width="528" height="380" rx="6" ry="6"
+              fill="url(#paperGrad)"/>
+
+        <!-- Righe di testo battuto -->
+        <g fill="#1A1A1A">
+          <rect x="186" y="58"  width="430" height="14" rx="2"/>
+          <rect x="186" y="96"  width="360" height="14" rx="2"/>
+          <rect x="186" y="134" width="400" height="14" rx="2"/>
+          <rect x="186" y="172" width="300" height="14" rx="2"/>
+          <rect x="186" y="210" width="380" height="14" rx="2"/>
+          <rect x="186" y="248" width="240" height="14" rx="2"/>
+          <rect x="186" y="306" width="200" height="14" rx="2"/>
+        </g>
+      </g>
+
+      <!-- Corpo macchina (avorio) -->
+      <g filter="url(#dropShadow)">
+        <path d="M 60 400
+                 L 760 400
+                 L 800 740
+                 Q 800 780, 760 780
+                 L 60 780
+                 Q 20 780, 20 740
+                 Z"
+              fill="url(#bodyGrad)"
+              stroke="#A8956A"
+              stroke-width="4"/>
+
+        <!-- Rullo nero (cilindro orizzontale) -->
+        <rect x="50" y="350" width="720" height="60" rx="30"
+              fill="url(#platenGrad)"/>
+
+        <!-- Manopole laterali del rullo -->
+        <circle cx="50" cy="380" r="40"
+                fill="#3A3A3A" stroke="#1F1F1F" stroke-width="3"/>
+        <circle cx="50" cy="380" r="18" fill="#5C5C5C"/>
+        <circle cx="770" cy="380" r="40"
+                fill="#3A3A3A" stroke="#1F1F1F" stroke-width="3"/>
+        <circle cx="770" cy="380" r="18" fill="#5C5C5C"/>
+      </g>
+
+      <!-- Tastiera: tre file di tasti -->
+      <g>
+        <!-- Fila 1 -->
+        <g>
+          <circle cx="120" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="195" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="270" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="345" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="420" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="495" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="570" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="645" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="720" cy="490" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+        </g>
+        <!-- Fila 2 -->
+        <g>
+          <circle cx="105" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="180" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="255" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="330" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="405" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="480" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="555" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="630" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+          <circle cx="705" cy="560" r="26" fill="url(#keyGrad)"
+                  stroke="#8C7E5C" stroke-width="3"/>
+        </g>
+        <!-- Barra spaziatrice -->
+        <rect x="200" y="620" width="420" height="36" rx="18"
+              fill="url(#keyGrad)" stroke="#8C7E5C" stroke-width="3"/>
+      </g>
+
+      <!-- Logo "L 25" stilizzato (perso a piccola scala, e' OK) -->
+      <text x="410" y="725"
+            font-family="Courier, monospace"
+            font-size="26"
+            font-weight="bold"
+            text-anchor="middle"
+            fill="#6B5F45"
+            letter-spacing="4">L 25</text>
+
+    </g>
+  </g>
+</svg>

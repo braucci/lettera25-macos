@@ -1,0 +1,4 @@
+pyobjc-core>=10.0
+pyobjc-framework-Cocoa>=10.0
+Pillow>=10.0
+py2app>=0.28

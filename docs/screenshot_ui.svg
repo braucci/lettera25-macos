@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 780" width="560" height="780"
+     font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif">
+
+  <defs>
+    <linearGradient id="winBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F6F6F6"/>
+      <stop offset="100%" stop-color="#ECECEC"/>
+    </linearGradient>
+    <linearGradient id="titleBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8E8E8"/>
+      <stop offset="100%" stop-color="#D8D8D8"/>
+    </linearGradient>
+    <linearGradient id="btnBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5BAFFF"/>
+      <stop offset="100%" stop-color="#0A84FF"/>
+    </linearGradient>
+    <linearGradient id="btnDefault" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F0F0F0"/>
+    </linearGradient>
+    <linearGradient id="popup" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F5F5F5"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0.6"/>
+      <feOffset dx="0" dy="0.5" result="b"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Window background (squircle bordo macOS) -->
+  <rect width="560" height="780" rx="10" ry="10" fill="url(#winBg)" stroke="#B8B8B8" stroke-width="0.5"/>
+
+  <!-- Title bar -->
+  <g>
+    <path d="M 0 10 Q 0 0 10 0 L 550 0 Q 560 0 560 10 L 560 28 L 0 28 Z" fill="url(#titleBar)"/>
+    <line x1="0" y1="28" x2="560" y2="28" stroke="#C5C5C5" stroke-width="0.5"/>
+    <!-- Semaforo macOS -->
+    <circle cx="18" cy="14" r="6" fill="#FF5F57" stroke="#E0443E" stroke-width="0.3"/>
+    <circle cx="36" cy="14" r="6" fill="#FEBC2E" stroke="#D89E15" stroke-width="0.3"/>
+    <circle cx="54" cy="14" r="6" fill="#28C840" stroke="#1AAB29" stroke-width="0.3"/>
+    <!-- Titolo -->
+    <text x="280" y="18" font-size="13" font-weight="600" fill="#3A3A3A" text-anchor="middle">
+      Olivetti Lettera 25
+    </text>
+  </g>
+
+  <!-- Label "Testo da imprimere" -->
+  <text x="16" y="58" font-size="13" font-weight="700" fill="#1E1E1E">Testo da imprimere:</text>
+
+  <!-- TextView -->
+  <g filter="url(#shadow)">
+    <rect x="16" y="66" width="528" height="120" rx="4" fill="#FFFFFF" stroke="#C8C8C8"/>
+    <g font-size="13" fill="#1E1E1E">
+      <text x="28" y="86">L'acqua è insegnata dalla sete.</text>
+      <text x="28" y="104">La terra, dagli oceani traversati.</text>
+      <text x="28" y="122">La gioia, dal dolore.</text>
+      <text x="28" y="140">La pace, dai racconti di battaglia.</text>
+      <text x="28" y="158">L'amore da un'impronta di memoria.</text>
+      <text x="28" y="176">Gli uccelli, dalla neve.</text>
+    </g>
+  </g>
+
+  <!-- Riga 1: Profilo / Font / Formato -->
+  <g transform="translate(16, 208)">
+    <text x="0" y="14" font-size="11" fill="#3A3A3A">Profilo:</text>
+    <rect x="0" y="20" width="170" height="24" rx="4" fill="url(#popup)" stroke="#B8B8B8" filter="url(#shadow)"/>
+    <text x="10" y="36" font-size="12" fill="#1E1E1E">Lettera 25</text>
+    <text x="155" y="36" font-size="11" fill="#666">⌄</text>
+
+    <text x="178" y="14" font-size="11" fill="#3A3A3A">Font:</text>
+    <rect x="178" y="20" width="170" height="24" rx="4" fill="url(#popup)" stroke="#B8B8B8" filter="url(#shadow)"/>
+    <text x="188" y="36" font-size="12" fill="#1E1E1E">Courier Prime</text>
+    <text x="333" y="36" font-size="11" fill="#666">⌄</text>
+
+    <text x="356" y="14" font-size="11" fill="#3A3A3A">Formato:</text>
+    <rect x="356" y="20" width="172" height="24" rx="4" fill="url(#popup)" stroke="#B8B8B8" filter="url(#shadow)"/>
+    <text x="366" y="36" font-size="12" fill="#1E1E1E">Adattivo (autofit)</text>
+    <text x="513" y="36" font-size="11" fill="#666">⌄</text>
+  </g>
+
+  <!-- Riga 2: Dim/Largh/V-anchor -->
+  <g transform="translate(16, 268)">
+    <text x="0" y="12" font-size="11" fill="#3A3A3A">Dim. font:</text>
+    <rect x="72" y="0" width="60" height="22" rx="4" fill="#FFFFFF" stroke="#B8B8B8"/>
+    <text x="102" y="15" font-size="12" fill="#1E1E1E" text-anchor="middle">48</text>
+
+    <text x="150" y="12" font-size="11" fill="#3A3A3A">Largh. %:</text>
+    <rect x="215" y="0" width="60" height="22" rx="4" fill="#FFFFFF" stroke="#B8B8B8"/>
+    <text x="245" y="15" font-size="12" fill="#1E1E1E" text-anchor="middle">78</text>
+
+    <text x="290" y="12" font-size="11" fill="#3A3A3A">V-anchor:</text>
+    <rect x="355" y="0" width="60" height="22" rx="4" fill="#FFFFFF" stroke="#B8B8B8"/>
+    <text x="385" y="15" font-size="12" fill="#1E1E1E" text-anchor="middle">0.42</text>
+  </g>
+
+  <!-- Riga 3: Seed + bottone Genera -->
+  <g transform="translate(16, 300)">
+    <text x="0" y="14" font-size="11" fill="#3A3A3A">Seed:</text>
+    <rect x="42" y="2" width="60" height="22" rx="4" fill="#FFFFFF" stroke="#B8B8B8"/>
+    <text x="72" y="17" font-size="12" fill="#1E1E1E" text-anchor="middle">0</text>
+
+    <!-- Checkbox -->
+    <rect x="115" y="4" width="14" height="14" rx="3" fill="url(#btnBlue)"/>
+    <path d="M 118 11 L 122 15 L 127 8" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="135" y="16" font-size="12" fill="#1E1E1E">usa seed</text>
+
+    <!-- Pulsante Genera (azzurro, default) -->
+    <rect x="368" y="-2" width="160" height="28" rx="6" fill="url(#btnBlue)" filter="url(#shadow)"/>
+    <text x="448" y="16" font-size="13" font-weight="600" fill="#FFFFFF" text-anchor="middle">Genera immagine</text>
+  </g>
+
+  <!-- Label "Anteprima" -->
+  <text x="16" y="356" font-size="13" font-weight="700" fill="#1E1E1E">Anteprima:</text>
+
+  <!-- Preview area con immagine simulata -->
+  <g filter="url(#shadow)">
+    <rect x="16" y="364" width="528" height="356" rx="4" fill="#F5F0E8" stroke="#C0B8A8"/>
+
+    <!-- Foglio simulato -->
+    <g transform="translate(60, 410)">
+      <rect width="440" height="260" rx="2" fill="#F8EEE8"/>
+      <g fill="#1E1A28" font-family="Courier, monospace" font-size="15" font-weight="500">
+        <text x="22" y="36">L'acqua è insegnata dalla sete.</text>
+        <text x="22" y="68">La terra, dagli oceani traversati.</text>
+        <text x="22" y="100">La gioia, dal dolore.</text>
+        <text x="22" y="132">La pace, dai racconti di battaglia.</text>
+        <text x="22" y="164">L'amore da un'impronta di memoria.</text>
+        <text x="22" y="196">Gli uccelli, dalla neve.</text>
+        <text x="22" y="232">- Emily Dickinson</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Pulsanti in basso -->
+  <g transform="translate(16, 736)">
+    <rect x="0" y="0" width="140" height="28" rx="6" fill="url(#btnDefault)" stroke="#B0B0B0" filter="url(#shadow)"/>
+    <text x="70" y="18" font-size="13" fill="#1E1E1E" text-anchor="middle">Salva su file…</text>
+
+    <rect x="150" y="0" width="140" height="28" rx="6" fill="url(#btnDefault)" stroke="#B0B0B0" filter="url(#shadow)"/>
+    <text x="220" y="18" font-size="13" fill="#1E1E1E" text-anchor="middle">Copia immagine</text>
+  </g>
+</svg>
