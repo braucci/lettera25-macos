@@ -3,6 +3,18 @@
 Tutte le modifiche degne di nota sono documentate qui, in accordo con
 [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
+## [1.1.0] — 2026-06-06
+
+### Added
+
+- **Selettore di sfondo del foglio** nella riga dei parametri: `Profilo`
+  (default, usa il `paper_color` calibrato del profilo), `Bianco`
+  (255,255,255) e `Avorio` (248,240,222). La scelta sovrascrive solo il
+  colore della carta; la fisica dell'inchiostro (profilo) resta invariata.
+- **`core.py`**: nuove costanti `PAPER_BIANCO` e `PAPER_AVORIO` e parametro
+  opzionale `paper_color` in `render_sentence` e `render_sentence_tight`
+  (default `None` ⇒ comportamento precedente preservato).
+
 ## [1.0.1] — 2026-06-04
 
 ### Fixed

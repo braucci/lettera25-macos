@@ -117,6 +117,21 @@ PROFILES = {
 
 
 # =============================================================
+#   COLORI-CARTA SOVRASCRIVIBILI
+# =============================================================
+#
+# Ogni profilo porta il suo `paper_color` calibrato (vedi sopra). Le
+# funzioni di rendering accettano pero' un parametro `paper_color` che,
+# se valorizzato, ha la precedenza: separa la *fisica dell'inchiostro*
+# (modellata nel profilo) dalla *scelta del supporto* (il foglio), in
+# modo che lo stesso profilo possa essere stampato su carte diverse.
+# Componenti RGB intere, 0..255.
+
+PAPER_BIANCO = (255, 255, 255)
+PAPER_AVORIO = (248, 240, 222)
+
+
+# =============================================================
 #   GENERATORE DI MASCHERA DI RUMORE (valore-noise leggero)
 # =============================================================
 
@@ -360,6 +375,7 @@ def render_sentence(text,
                     text_width_ratio=0.78,
                     vertical_anchor=0.42,
                     apply_typo=True,
+                    paper_color=None,
                     seed=None):
     if seed is not None:
         random.seed(seed)
@@ -379,7 +395,8 @@ def render_sentence(text,
 
     block, _, _ = _render_text_block(text, font, profile, text_max_width)
 
-    paper = Image.new("RGB", paper_size, profile["paper_color"])
+    fondo = paper_color if paper_color is not None else profile["paper_color"]
+    paper = Image.new("RGB", paper_size, fondo)
     paste_x = (paper_w - block.width) // 2
     block_center_y = int(paper_h * vertical_anchor)
     paste_y = block_center_y - block.height // 2
@@ -394,6 +411,7 @@ def render_sentence_tight(text,
                           max_width=900,
                           margin=80,
                           apply_typo=True,
+                          paper_color=None,
                           seed=None):
     if seed is not None:
         random.seed(seed)
@@ -411,7 +429,8 @@ def render_sentence_tight(text,
 
     paper_w = block.width + 2 * margin
     paper_h = block.height + 2 * margin
-    paper = Image.new("RGB", (paper_w, paper_h), profile["paper_color"])
+    fondo = paper_color if paper_color is not None else profile["paper_color"]
+    paper = Image.new("RGB", (paper_w, paper_h), fondo)
     paper.paste(block, (margin, margin), block)
     return paper
 

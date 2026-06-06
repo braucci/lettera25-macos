@@ -183,6 +183,12 @@ PAPER_PRESETS = [
     ("Adattivo (autofit)",        None),
 ]
 
+# Sfondo del foglio (ordine = indici della popup).
+# Indice 0 = None -> usa il `paper_color` calibrato del profilo (default,
+# comportamento invariato). Gli altri due sovrascrivono il foglio.
+BG_LABELS = ["Profilo", "Bianco", "Avorio"]
+BG_COLORS = [None, core.PAPER_BIANCO, core.PAPER_AVORIO]
+
 
 # =============================================================
 #   AppDelegate
@@ -384,6 +390,16 @@ class AppDelegate(NSObject):
         self.seedCheck.setState_(0)
         content.addSubview_(self.seedCheck)
 
+        # Selettore sfondo del foglio (Profilo / Bianco / Avorio)
+        content.addSubview_(self._label("Sfondo:", M + 208, y + 6, 52, 16))
+        self.bgPop = NSPopUpButton.alloc().initWithFrame_pullsDown_(
+            NSMakeRect(M + 262, y - 2, 98, 26), False
+        )
+        for label in BG_LABELS:
+            self.bgPop.addItemWithTitle_(label)
+        self.bgPop.selectItemAtIndex_(0)   # 0 = Profilo (default invariato)
+        content.addSubview_(self.bgPop)
+
         # Pulsante Genera a destra
         gen_w = 160
         self.generateBtn = NSButton.alloc().initWithFrame_(
@@ -471,6 +487,10 @@ class AppDelegate(NSObject):
         return PAPER_PRESETS[self.paperPop.indexOfSelectedItem()][1]
 
     @objc.python_method
+    def _getBackground(self):
+        return BG_COLORS[self.bgPop.indexOfSelectedItem()]
+
+    @objc.python_method
     def _readFloat(self, field, default):
         try:
             return float(field.stringValue().replace(",", "."))
@@ -493,6 +513,7 @@ class AppDelegate(NSObject):
 
         profile = self._getProfile()
         paper = self._getPaper()
+        background = self._getBackground()
         font_size = max(8, self._readInt(self.sizeField, 28))
         width_ratio = max(0.2, min(0.95,
                                    self._readFloat(self.widthField, 78) / 100.0))
@@ -511,6 +532,7 @@ class AppDelegate(NSObject):
                     font_size=font_size,
                     profile_name=profile,
                     max_width=max_w,
+                    paper_color=background,
                     seed=seed,
                 )
             else:
@@ -522,6 +544,7 @@ class AppDelegate(NSObject):
                     paper_size=paper,
                     text_width_ratio=width_ratio,
                     vertical_anchor=v_anchor,
+                    paper_color=background,
                     seed=seed,
                 )
         except Exception as exc:

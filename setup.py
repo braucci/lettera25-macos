@@ -40,8 +40,8 @@ OPTIONS = {
         "CFBundleName":          "Lettera 25",
         "CFBundleDisplayName":   "Olivetti Lettera 25",
         "CFBundleIdentifier":    "net.raucci.lettera25",
-        "CFBundleVersion":       "1.0.0",
-        "CFBundleShortVersionString": "1.0.0",
+        "CFBundleVersion":       "1.1.0",
+        "CFBundleShortVersionString": "1.1.0",
         "CFBundleExecutable":    "Lettera25",
         "LSMinimumSystemVersion": "11.0",
 
@@ -62,7 +62,7 @@ OPTIONS = {
 
 setup(
     name="Lettera25",
-    version="1.0.0",
+    version="1.1.0",
     app=APP,
     data_files=DATA_FILES,
     options={"py2app": OPTIONS},
