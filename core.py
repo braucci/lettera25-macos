@@ -199,21 +199,101 @@ def _dilate_alpha(img, amount):
 
 
 # =============================================================
+#   NASTRO BICOLORE E IMPERFEZIONI (esperienza analogica)
+# =============================================================
+#
+# Su una macchina con nastro nero/rosso, il selettore di colore alza o
+# abbassa il nastro davanti allo slug. In posizione intermedia, o per
+# slittamento del nastro, lo slug puo' colpire a cavallo della frontiera
+# fra le due bande: ne nascono i tre fenomeni che modelliamo qui sotto.
+# Tutti gli effetti sono governati da due intensita' in [0, 1]:
+#   • brk  ("brokenness"): nastro secco/sporco, peli, erosione casuale.
+#   • red  ("nastro rosso"): probabilita' che un glifo "pizzichi" il rosso.
+
+RIBBON_RED = (176, 28, 32)     # rosso tipico del nastro bicolore
+
+
+def _tint(img, rgb):
+    """Ricolora un glifo RGBA con `rgb`, preservandone il canale alpha
+    (la *forma* dell'inchiostratura resta quella, cambia solo il colore)."""
+    a = img.getchannel("A")
+    out = Image.new("RGBA", img.size, rgb + (255,))
+    out.putalpha(a)
+    return out
+
+
+def _split_red_black(img):
+    """Glifo rosso in alto e nero in basso: lo slug ha impresso a cavallo
+    della frontiera fra le due bande del nastro. La frontiera e' a
+    un'altezza casuale, con transizione morbida (il nastro non e' netto)."""
+    a = img.getchannel("A")
+    w, h = img.size
+    cut = int(h * random.uniform(0.38, 0.62))
+    mask = Image.new("L", (w, h), 0)
+    mask.paste(Image.new("L", (w, max(1, cut)), 255), (0, 0))  # 255 -> rosso (alto)
+    mask = mask.filter(ImageFilter.GaussianBlur(1.3))
+    out = Image.composite(_tint(img, RIBBON_RED), img, mask)
+    out.putalpha(a)
+    return out
+
+
+def _red_smudge(img):
+    """Ghost rosso tenue e sbavato, leggermente sfalsato: lo slug ha solo
+    'pizzicato' il bordo della banda rossa -> una sbavatura di rosso.
+    Ritorna (immagine, dx, dy) da imprimere sotto la stampa principale."""
+    rosso = _tint(img, RIBBON_RED)
+    r, g, b, a = rosso.split()
+    a = a.point(lambda v: int(v * random.uniform(0.22, 0.42)))
+    rosso = Image.merge("RGBA", (r, g, b, a))
+    rosso = rosso.filter(ImageFilter.GaussianBlur(random.uniform(0.8, 1.7)))
+    dx = int(round(random.uniform(-1.6, 1.6)))
+    dy = int(round(random.uniform(-1.1, 1.1)))
+    return rosso, dx, dy
+
+
+def _scatter_dirt(block, brk):
+    """Sparge sul foglio flecks d'inchiostro (nastro sporco) e qualche pelo
+    di nastro piu' chiaro. Densita' proporzionale all'area e a `brk`."""
+    w, h = block.size
+    draw = ImageDraw.Draw(block)
+    n = int(brk * (w * h) / 8500)
+    for _ in range(n):
+        x = random.randint(0, w - 1)
+        y = random.randint(0, h - 1)
+        s = random.choice([1, 1, 1, 2])
+        alpha = random.randint(18, 95)
+        draw.ellipse([x, y, x + s, y + s], fill=(26, 24, 28, alpha))
+    # peli/sbavature di nastro, piu' rari e allungati
+    for _ in range(max(1, n // 12)):
+        x = random.randint(0, w - 1)
+        y = random.randint(0, h - 1)
+        ln = random.randint(2, 6)
+        alpha = random.randint(14, 55)
+        draw.line([x, y, x + ln, y + random.randint(-1, 1)],
+                  fill=(40, 36, 40, alpha), width=1)
+
+
+# =============================================================
 #   RENDERING DEL SINGOLO GLIFO
 # =============================================================
 
 _glyph_counter = [0]   # contatore globale per seed_hint del noise
 
 
-def _render_glyph(char, font, profile, pad):
+def _render_glyph(char, font, profile, pad, brk=0.0, red=0.0):
     """
     Renderizza un singolo glifo applicando, nell'ordine:
       1) disegno base
       2) dilatazione morfologica (riempimento contro-grafemi)
       3) variazione di pressione globale per glifo
       4) modulazione intra-glifo con noise mask
+      4b) erosione casuale da nastro secco/sporco (brk)
       5) bleed gaussiano
       6) rotazione (sub-grado)
+      7) nastro bicolore: tutto rosso / rosso-su-nero / sbavatura (red)
+
+    Ritorna (img, advance_x, red_ghost), dove red_ghost e' None oppure la
+    tripla (immagine, dx, dy) della sbavatura rossa da imprimere sotto.
 
     Il canvas ha dimensioni costanti per garantire l'allineamento
     della baseline tra glifi diversi.
@@ -253,6 +333,18 @@ def _render_glyph(char, font, profile, pad):
         a = ImageChops.multiply(a, noise_mask)
         img = Image.merge("RGBA", (r, g, b, a))
 
+    # 4b) Erosione casuale da nastro secco/sporco (brk)
+    if brk > 0 and random.random() < brk * 0.6:
+        _glyph_counter[0] += 1
+        dry = _make_noise_mask(
+            img.size,
+            strength=min(0.9, 0.35 + brk * 0.5),
+            seed_hint=_glyph_counter[0] * 7919 + 1,
+        )
+        r, g, b, a = img.split()
+        a = ImageChops.multiply(a, dry)
+        img = Image.merge("RGBA", (r, g, b, a))
+
     # 5) Bleed
     if profile["bleed_radius"] > 0:
         img = img.filter(ImageFilter.GaussianBlur(radius=profile["bleed_radius"]))
@@ -262,7 +354,18 @@ def _render_glyph(char, font, profile, pad):
         angle = random.uniform(-profile["rotation_max"], profile["rotation_max"])
         img = img.rotate(angle, resample=Image.BICUBIC, expand=False)
 
-    return img, advance_x
+    # 7) Nastro bicolore: il glifo "pizzica" la banda rossa
+    red_ghost = None
+    if red > 0:
+        roll = random.random()
+        if roll < red * 0.06:
+            img = _tint(img, RIBBON_RED)        # tutto rosso (selettore spostato)
+        elif roll < red * 0.26:
+            img = _split_red_black(img)         # rosso sopra / nero sotto
+        elif roll < red * 0.46:
+            red_ghost = _red_smudge(img)        # sbavatura rossa (pizzicata)
+
+    return img, advance_x, red_ghost
 
 
 # =============================================================
@@ -295,14 +398,15 @@ def _wrap_text(text, font, max_width):
 #   RENDERING DEL BLOCCO DI TESTO
 # =============================================================
 
-def _render_text_block(text, font, profile, max_width):
+def _render_text_block(text, font, profile, max_width, brk=0.0, red=0.0):
     """
     Renderizza il blocco di testo su immagine RGBA trasparente.
 
     Per ogni glifo, oltre alla stampa principale, esegue (se attivo)
     un'impressione fantasma (ghost) sfalsata di 'ghost_offset' px
     con opacità 'ghost_alpha', che simula il rimbalzo elastico del
-    martelletto.
+    martelletto. Con brk/red attivi aggiunge jitter extra, sbavature
+    rosse del nastro bicolore e flecks di sporco sul foglio.
     """
     ascent, descent = font.getmetrics()
     full_h = ascent + descent
@@ -333,7 +437,8 @@ def _render_text_block(text, font, profile, max_width):
                 cursor_x += font.getlength(" ")
                 continue
 
-            glyph_img, advance_x = _render_glyph(ch, font, profile, pad)
+            glyph_img, advance_x, red_ghost = _render_glyph(
+                ch, font, profile, pad, brk, red)
 
             base_x = int(cursor_x - pad)
             base_y = int(line_top_y - pad)
@@ -343,6 +448,16 @@ def _render_text_block(text, font, profile, max_width):
                 dy = random.gauss(0, profile["sigma_y"])
                 base_x += int(round(dx))
                 base_y += int(round(dy))
+
+            # Jitter extra da imperfezioni (meccanica usurata)
+            if brk > 0:
+                base_x += int(round(random.gauss(0, brk * 0.8)))
+                base_y += int(round(random.gauss(0, brk * 1.3)))
+
+            # Sbavatura rossa (nastro pizzicato) — sotto a tutto
+            if red_ghost is not None:
+                rg_img, rdx, rdy = red_ghost
+                block.paste(rg_img, (base_x + rdx, base_y + rdy), rg_img)
 
             # Ghost (rimbalzo) — disegnato PRIMA, sotto la stampa principale
             if ghost_alpha > 0:
@@ -360,6 +475,10 @@ def _render_text_block(text, font, profile, max_width):
 
             cursor_x += advance_x
 
+    # Sporco del nastro sparso sul foglio (dopo tutte le righe)
+    if brk > 0:
+        _scatter_dirt(block, brk)
+
     return block, line_height, len(lines)
 
 
@@ -376,6 +495,8 @@ def render_sentence(text,
                     vertical_anchor=0.42,
                     apply_typo=True,
                     paper_color=None,
+                    brokenness=None,
+                    red_ribbon=None,
                     seed=None):
     if seed is not None:
         random.seed(seed)
@@ -393,7 +514,9 @@ def render_sentence(text,
     paper_w, paper_h = paper_size
     text_max_width = int(paper_w * text_width_ratio)
 
-    block, _, _ = _render_text_block(text, font, profile, text_max_width)
+    brk = brokenness if brokenness is not None else profile.get("brokenness", 0.0)
+    red = red_ribbon if red_ribbon is not None else profile.get("red_ribbon", 0.0)
+    block, _, _ = _render_text_block(text, font, profile, text_max_width, brk, red)
 
     fondo = paper_color if paper_color is not None else profile["paper_color"]
     paper = Image.new("RGB", paper_size, fondo)
@@ -412,6 +535,8 @@ def render_sentence_tight(text,
                           margin=80,
                           apply_typo=True,
                           paper_color=None,
+                          brokenness=None,
+                          red_ribbon=None,
                           seed=None):
     if seed is not None:
         random.seed(seed)
@@ -425,7 +550,9 @@ def render_sentence_tight(text,
         text = apply_typography(text)
 
     font = ImageFont.truetype(font_path, font_size)
-    block, _, _ = _render_text_block(text, font, profile, max_width)
+    brk = brokenness if brokenness is not None else profile.get("brokenness", 0.0)
+    red = red_ribbon if red_ribbon is not None else profile.get("red_ribbon", 0.0)
+    block, _, _ = _render_text_block(text, font, profile, max_width, brk, red)
 
     paper_w = block.width + 2 * margin
     paper_h = block.height + 2 * margin

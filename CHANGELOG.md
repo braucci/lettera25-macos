@@ -3,6 +3,48 @@
 Tutte le modifiche degne di nota sono documentate qui, in accordo con
 [Keep a Changelog](https://keepachangelog.com/it-IT/1.1.0/).
 
+## [1.3.0] — 2026-06-06
+
+### Added
+
+- **Imperfezioni analogiche regolabili** con due slider nell'interfaccia:
+  - *Imperfezioni* (brokenness): erosione casuale dei glifi da nastro
+    secco, jitter extra di battuta, flecks e peli di nastro sul foglio.
+  - *Nastro rosso*: simulazione del nastro bicolore nero/rosso. Un glifo
+    può uscire tutto rosso, rosso-sopra/nero-sotto (slug a cavallo della
+    frontiera fra le bande) o con una sbavatura rossa tenue (nastro
+    "pizzicato").
+- **`core.py`**: nuovi parametri `brokenness` e `red_ribbon` in
+  `render_sentence`/`render_sentence_tight` (default `None` ⇒ usa il
+  profilo, che vale 0 ⇒ comportamento invariato); helper `_tint`,
+  `_split_red_black`, `_red_smudge`, `_scatter_dirt` e costante `RIBBON_RED`.
+
+### Notes
+
+- Le invarianti di determinismo restano valide: con intensità 0 non viene
+  consumato alcun numero casuale aggiuntivo, quindi seed fisso ⇒ pixel
+  identici e il profilo "poesia" resta deterministico anche senza seed.
+
+## [1.2.0] — 2026-06-06
+
+### Added
+
+- **Selettore Font ora funzionante** con più famiglie typewriter. Due font
+  sono impacchettati nel bundle (autoportante, indipendente dal sistema):
+  **Courier Prime** (SIL OFL 1.1) e **Special Elite** (Apache 2.0). Si
+  aggiungono i font typewriter/monospazio di macOS se presenti (Courier,
+  Courier New, American Typewriter, Menlo, Monaco).
+- **Auto-discovery dei font**: qualunque `.ttf/.otf/.ttc` collocato in
+  `assets/fonts/` compare automaticamente nel menu, senza modifiche al codice.
+- `assets/fonts/` con i file dei font e i rispettivi testi di licenza, inclusi
+  nel bundle via `DATA_FILES`.
+
+### Changed
+
+- `app.py`: rimosso il vecchio `find_best_font()` come unica sorgente (resta
+  come rete di sicurezza); introdotto `build_font_list()` e il getter
+  `_getFontPath()`; il rendering usa il font selezionato anziché uno fisso.
+
 ## [1.1.0] — 2026-06-06
 
 ### Added

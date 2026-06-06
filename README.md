@@ -25,8 +25,10 @@ impacchettata come bundle `.app` standalone con py2app.
 **Lettera 25** trasforma qualsiasi testo in un'immagine PNG che simula
 fedelmente l'impressione meccanica di una macchina da scrivere Olivetti
 Lettera 25 (prodotta dalla Olivetti tra il 1974 e il 1989). Non si limita
-a usare un font monospazio: modella sette fenomeni fisici distinti
-dell'impressione meccanica.
+a usare un font monospazio: modella una decina di fenomeni fisici distinti
+dell'impressione meccanica, parte fissi nei profili e parte regolabili in
+tempo reale — incluso il **nastro bicolore nero/rosso** e lo **sporco del
+nastro**, per un'aderenza spinta all'esperienza analogica.
 
 ### Confronto con una battitura reale
 
@@ -51,6 +53,20 @@ dell'impressione meccanica.
 | **Lettera 25** | Macchina in buone condizioni, impressione carica con leggere irregolarità | Riprodurre fedelmente una battitura reale |
 | **Poesia** | Stampa digitale pulita, layout poetico su foglio | Citazioni e poesie da pubblicare online |
 | **Vintage** | Macchina usurata, nastro consumato | Estetica "anni '70, dattiloscritto d'archivio" |
+
+### Controlli interattivi
+
+Oltre al profilo, l'interfaccia espone alcune scelte di resa:
+
+| Controllo | Funzione |
+|-----------|----------|
+| **Font** | Famiglia tipografica. Due font typewriter sono **inclusi nel bundle** — Courier Prime e Special Elite — affiancati ai font monospazio di sistema (Courier, American Typewriter, Menlo, Monaco). Qualunque `.ttf/.otf` aggiunto in `assets/fonts/` compare in automatico. |
+| **Sfondo** | Colore del foglio: `Profilo` (il colore calibrato del profilo), `Bianco` o `Avorio`. Sovrascrive solo la carta, non l'inchiostro. |
+| **Imperfezioni** | Intensità (0–100) di nastro secco/sporco: erosione casuale dei glifi, jitter extra, flecks e peli di nastro sul foglio. |
+| **Nastro rosso** | Probabilità (0–100) che un glifo "pizzichi" la banda rossa del nastro bicolore: lettera tutta rossa, rossa-sopra/nera-sotto, oppure sbavatura rossa. |
+
+I controlli numerici restanti (dimensione font, larghezza colonna, ancoraggio
+verticale, seed) governano composizione e ripetibilità.
 
 ---
 
@@ -157,24 +173,21 @@ Output atteso:
 Tutti i sanity check sono passati.
 ```
 
-### Passo 4 — Font Courier Prime (consigliato)
+### Passo 4 — Font (già inclusi)
 
-Per la massima fedeltà alla macchina reale. Se non lo installi, l'app
-cade automaticamente sul miglior font monospazio disponibile (Menlo,
-Monaco, SF Mono).
+Dalla v1.2.0 i font typewriter **viaggiano dentro il bundle**
+(`assets/fonts/`): Courier Prime (SIL OFL 1.1) e Special Elite
+(Apache 2.0). Non devi installare nulla: compaiono nel menu **Font**
+insieme ai monospazio di sistema. Per aggiungerne altri, copia un
+`.ttf/.otf` in `assets/fonts/` e includilo in `DATA_FILES` dentro
+`setup.py`: l'app lo scopre da sé.
+
+Se vuoi anche averli a livello di sistema (per altre app), copiali in
+`~/Library/Fonts/`:
 
 ```bash
-mkdir -p ~/Library/Fonts
-cd /tmp
-for v in Regular Bold Italic BoldItalic; do
-    curl -L -o "CourierPrime-${v}.ttf" \
-        "https://github.com/quoteunquoteapps/CourierPrime/raw/master/fonts/ttf/CourierPrime-${v}.ttf"
-done
-cp CourierPrime-*.ttf ~/Library/Fonts/
+cp assets/fonts/*.ttf ~/Library/Fonts/
 ```
-
-Verifica aprendo **Catalogo Font** (Spotlight → "Catalogo Font"), cerca
-"Courier Prime".
 
 ### Passo 5 — Build del bundle `.app`
 
@@ -258,7 +271,11 @@ lettera25-macos/
 ├── assets/
 │   ├── icon.svg       # Master vettoriale 1024×1024 (squircle Big Sur+)
 │   ├── icon.icns      # Icona compilata, riferita da setup.py
-│   └── icon.iconset/  # 10 PNG canoniche Apple (16…512@2x)
+│   ├── icon.iconset/  # 10 PNG canoniche Apple (16…512@2x)
+│   └── fonts/         # Font inclusi nel bundle (+ testi di licenza)
+│       ├── CourierPrime-Regular.ttf       # SIL OFL 1.1
+│       ├── SpecialElite-Regular.ttf       # Apache 2.0
+│       └── LICENSE-*.txt
 └── docs/
     ├── sample_real.jpg     # Foto di confronto (battitura reale)
     ├── sample_app.png      # Output dell'app
@@ -308,6 +325,12 @@ operante a una scala spaziale diversa:
 | Intra-glifo (geometria)    | Diffusione capillare nei contro-grafemi | Dilatazione morfologica `MaxFilter(3)` + blend |
 | Intra-glifo (sub-pixel)    | Diffusione dell'inchiostro nelle fibre | Convoluzione gaussiana (eq. del calore) |
 | Doppio impatto             | Rimbalzo elastico del martelletto | Stampa doppia con offset e α_ghost |
+| Nastro bicolore            | Slug a cavallo della frontiera nero/rosso | Tint rosso, split rosso/nero a soglia sfumata, ghost rosso |
+| Sporco del nastro          | Nastro secco, peli, residui d'inchiostro | Erosione da noise extra + flecks sparsi (densità ∝ area) |
+
+I primi sette fenomeni sono fissati nei profili; gli ultimi due sono
+regolabili dagli slider *Imperfezioni* e *Nastro rosso* (default 0, quindi
+inattivi finché non li alzi: il comportamento dei profili resta invariato).
 
 ### Giustificazione delle scelte distributive
 
@@ -421,8 +444,11 @@ robusta):
 
 Distribuito sotto licenza **MIT**. Vedi [`LICENSE`](LICENSE).
 
-I font Courier Prime (Quote-Unquote Apps) sono distribuiti sotto SIL
-Open Font License e non inclusi in questo repository.
+I font inclusi in `assets/fonts/` mantengono le rispettive licenze, anch'esse
+incluse nel repository e nel bundle:
+
+- **Courier Prime** (Quote-Unquote Apps) — SIL Open Font License 1.1
+- **Special Elite** (Astigmatic) — Apache License 2.0
 
 I marchi *Olivetti* e *Lettera 25* sono di Olivetti S.p.A. Uso
 puramente descrittivo, nessuna affiliazione.

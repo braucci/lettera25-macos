@@ -49,6 +49,7 @@ from Cocoa import (
     NSButton,
     NSPopUpButton,
     NSStepper,
+    NSSlider,
     NSImageView,
     NSImage,
     NSData,
@@ -75,6 +76,8 @@ from Cocoa import (
     NSAlertFirstButtonReturn,
     NSAlertStyleWarning,
 )
+
+from PIL import ImageFont
 
 import core
 
@@ -132,6 +135,105 @@ def find_best_font():
         "Nessun font monospazio trovato sul sistema. "
         "Installare almeno Courier Prime o Menlo."
     )
+
+
+# -------------------------------------------------------------
+#   Registro dei font: impacchettati nel bundle + di sistema
+# -------------------------------------------------------------
+#
+# Filosofia: il bundle e' autoportante. I font typewriter distintivi
+# (Courier Prime, Special Elite) viaggiano DENTRO l'app, in
+# assets/fonts/, e non dipendono da cosa l'utente ha installato — come
+# un velivolo porta a bordo i propri strumenti invece di assumere che
+# siano gia' in pista. In piu' si offrono i font typewriter/monospazio
+# che corredano macOS, se presenti.
+#
+# AUTO-DISCOVERY: qualunque .ttf/.otf/.ttc aggiunto in assets/fonts/
+# compare automaticamente nel menu, senza toccare il codice.
+
+BUNDLED_FONT_EXTS = (".ttf", ".otf", ".ttc")
+
+# (etichetta, nomi-file candidati) per i font che corredano macOS.
+SYSTEM_FONT_CANDIDATES = [
+    ("Courier",             ["Courier.ttc", "Courier.dfont"]),
+    ("Courier New",         ["Courier New.ttf"]),
+    ("American Typewriter", ["AmericanTypewriter.ttc"]),
+    ("Menlo",               ["Menlo.ttc", "Menlo-Regular.ttf"]),
+    ("Monaco",              ["Monaco.ttf"]),
+]
+
+SYSTEM_FONT_DIRS = [
+    os.path.expanduser("~/Library/Fonts"),
+    "/Library/Fonts",
+    "/System/Library/Fonts",
+    "/System/Library/Fonts/Supplemental",
+]
+
+
+def _bundled_fonts_dir():
+    """
+    Individua la cartella assets/fonts/ sia in sviluppo (accanto ad
+    app.py) sia dentro il bundle .app (Contents/Resources/assets/fonts).
+    Restituisce il primo percorso esistente, o None.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    exe = (os.path.dirname(os.path.abspath(sys.argv[0]))
+           if sys.argv and sys.argv[0] else here)
+    candidates = [
+        os.path.join(here, "assets", "fonts"),                     # dev
+        os.path.join(exe, "..", "Resources", "assets", "fonts"),   # bundle
+        os.path.join(here, "..", "Resources", "assets", "fonts"),
+    ]
+    for d in candidates:
+        d = os.path.normpath(d)
+        if os.path.isdir(d):
+            return d
+    return None
+
+
+def _font_label(path, fallback):
+    """Nome di famiglia del font (via Pillow); fallback al nome-file."""
+    try:
+        family, _ = ImageFont.truetype(path, 16).getname()
+        return family or fallback
+    except Exception:
+        return fallback
+
+
+def build_font_list():
+    """
+    Lista ordinata (etichetta, percorso) dei font disponibili:
+    prima quelli impacchettati (auto-discovery), poi quelli di sistema.
+    De-duplica per etichetta. Garantisce almeno una voce.
+    """
+    fonts = []
+    seen = set()
+
+    fdir = _bundled_fonts_dir()
+    if fdir:
+        for fn in sorted(os.listdir(fdir)):
+            if fn.lower().endswith(BUNDLED_FONT_EXTS):
+                p = os.path.join(fdir, fn)
+                label = _font_label(p, os.path.splitext(fn)[0])
+                if label not in seen:
+                    fonts.append((label, p))
+                    seen.add(label)
+
+    for label, filenames in SYSTEM_FONT_CANDIDATES:
+        if label in seen:
+            continue
+        for d in SYSTEM_FONT_DIRS:
+            hit = next((os.path.join(d, fn) for fn in filenames
+                        if os.path.exists(os.path.join(d, fn))), None)
+            if hit:
+                fonts.append((label, hit))
+                seen.add(label)
+                break
+
+    if not fonts:                       # rete di sicurezza
+        p, fam = find_best_font()
+        fonts.append((fam, p))
+    return fonts
 
 
 def pil_to_nsimage(pil_img):
@@ -221,9 +323,9 @@ class AppDelegate(NSObject):
     # =================================================
 
     def applicationDidFinishLaunching_(self, notification):
-        # Risolvi il font una sola volta in avvio
+        # Costruisci il registro dei font (bundled + di sistema)
         try:
-            self.fontPath, self.fontFamily = find_best_font()
+            self.fonts = build_font_list()
         except Exception as exc:
             self._fatalAlert(f"Errore di inizializzazione: {exc}")
             NSApp.terminate_(self)
@@ -259,6 +361,10 @@ class AppDelegate(NSObject):
             self._infoAlert("Immagine copiata negli appunti.")
         except Exception as exc:
             self._infoAlert(f"Errore copia: {exc}")
+
+    def sliderChanged_(self, sender):
+        self.brkValue.setStringValue_(str(int(self.brkSlider.floatValue())))
+        self.redValue.setStringValue_(str(int(self.redSlider.floatValue())))
 
     # =================================================
     #   Helper Python (decoratore obbligatorio)
@@ -340,11 +446,9 @@ class AppDelegate(NSObject):
         self.fontPop = NSPopUpButton.alloc().initWithFrame_pullsDown_(
             NSMakeRect(x, y - 6, col_w, 26), False
         )
-        self.fontPop.addItemWithTitle_(self.fontFamily)
+        for label, _ in self.fonts:
+            self.fontPop.addItemWithTitle_(label)
         self.fontPop.selectItemAtIndex_(0)
-        # NB: l'app usa SEMPRE il font risolto da find_best_font().
-        # Il dropdown e' presente per coerenza con la versione Linux,
-        # ma puo' essere esteso enumerando piu' famiglie installate.
         content.addSubview_(self.fontPop)
 
         x += col_w + 8
@@ -375,6 +479,37 @@ class AppDelegate(NSObject):
         content.addSubview_(self._label("V-anchor:", x, y + 6, 65, 16))
         self.vanchorField = self._numField(x + 67, y, small_w, "0.42")
         content.addSubview_(self.vanchorField)
+
+        # ---- 4b. Riga imperfezioni (nastro reale) ----
+        y -= 40
+        content.addSubview_(self._label("Imperfezioni:", M, y + 4, 86, 16))
+        self.brkSlider = NSSlider.alloc().initWithFrame_(
+            NSMakeRect(M + 88, y, 130, 22)
+        )
+        self.brkSlider.setMinValue_(0.0)
+        self.brkSlider.setMaxValue_(100.0)
+        self.brkSlider.setFloatValue_(0.0)
+        self.brkSlider.setContinuous_(True)
+        self.brkSlider.setTarget_(self)
+        self.brkSlider.setAction_(objc.selector(self.sliderChanged_, signature=b"v@:@"))
+        content.addSubview_(self.brkSlider)
+        self.brkValue = self._label("0", M + 222, y + 4, 30, 16)
+        content.addSubview_(self.brkValue)
+
+        x = M + 268
+        content.addSubview_(self._label("Nastro rosso:", x, y + 4, 86, 16))
+        self.redSlider = NSSlider.alloc().initWithFrame_(
+            NSMakeRect(x + 90, y, 118, 22)
+        )
+        self.redSlider.setMinValue_(0.0)
+        self.redSlider.setMaxValue_(100.0)
+        self.redSlider.setFloatValue_(0.0)
+        self.redSlider.setContinuous_(True)
+        self.redSlider.setTarget_(self)
+        self.redSlider.setAction_(objc.selector(self.sliderChanged_, signature=b"v@:@"))
+        content.addSubview_(self.redSlider)
+        self.redValue = self._label("0", x + 212, y + 4, 30, 16)
+        content.addSubview_(self.redValue)
 
         # ---- 5. Riga seed ----
         y -= 32
@@ -419,7 +554,7 @@ class AppDelegate(NSObject):
         )
 
         # ---- 7. NSImageView per anteprima ----
-        preview_h = 380
+        preview_h = 340
         y -= preview_h + 8
         self.imageView = NSImageView.alloc().initWithFrame_(
             NSMakeRect(M, y, WIN_W - 2*M, preview_h)
@@ -491,6 +626,13 @@ class AppDelegate(NSObject):
         return BG_COLORS[self.bgPop.indexOfSelectedItem()]
 
     @objc.python_method
+    def _getFontPath(self):
+        idx = self.fontPop.indexOfSelectedItem()
+        if 0 <= idx < len(self.fonts):
+            return self.fonts[idx][1]
+        return self.fonts[0][1]
+
+    @objc.python_method
     def _readFloat(self, field, default):
         try:
             return float(field.stringValue().replace(",", "."))
@@ -514,6 +656,9 @@ class AppDelegate(NSObject):
         profile = self._getProfile()
         paper = self._getPaper()
         background = self._getBackground()
+        font_path = self._getFontPath()
+        brokenness = self.brkSlider.floatValue() / 100.0
+        red_ribbon = self.redSlider.floatValue() / 100.0
         font_size = max(8, self._readInt(self.sizeField, 28))
         width_ratio = max(0.2, min(0.95,
                                    self._readFloat(self.widthField, 78) / 100.0))
@@ -528,23 +673,27 @@ class AppDelegate(NSObject):
                 max_w = int(font_size * 22)
                 img = core.render_sentence_tight(
                     text,
-                    font_path=self.fontPath,
+                    font_path=font_path,
                     font_size=font_size,
                     profile_name=profile,
                     max_width=max_w,
                     paper_color=background,
+                    brokenness=brokenness,
+                    red_ribbon=red_ribbon,
                     seed=seed,
                 )
             else:
                 img = core.render_sentence(
                     text,
-                    font_path=self.fontPath,
+                    font_path=font_path,
                     font_size=font_size,
                     profile_name=profile,
                     paper_size=paper,
                     text_width_ratio=width_ratio,
                     vertical_anchor=v_anchor,
                     paper_color=background,
+                    brokenness=brokenness,
+                    red_ribbon=red_ribbon,
                     seed=seed,
                 )
         except Exception as exc:

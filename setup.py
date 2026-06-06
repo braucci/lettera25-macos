@@ -14,7 +14,17 @@ from setuptools import setup
 
 APP = ["app.py"]
 
-DATA_FILES = []
+# I font impacchettati finiscono in Contents/Resources/assets/fonts/.
+# Includo anche i testi di licenza (OFL / Apache 2.0): la ridistribuzione
+# del bundle ridistribuisce i font, quindi le licenze devono viaggiare con esso.
+DATA_FILES = [
+    ("assets/fonts", [
+        "assets/fonts/CourierPrime-Regular.ttf",
+        "assets/fonts/SpecialElite-Regular.ttf",
+        "assets/fonts/LICENSE-CourierPrime-OFL.txt",
+        "assets/fonts/LICENSE-SpecialElite-Apache.txt",
+    ]),
+]
 
 OPTIONS = {
     # Icona compilata: riferimento al .icns multi-risoluzione
@@ -40,8 +50,8 @@ OPTIONS = {
         "CFBundleName":          "Lettera 25",
         "CFBundleDisplayName":   "Olivetti Lettera 25",
         "CFBundleIdentifier":    "net.raucci.lettera25",
-        "CFBundleVersion":       "1.1.0",
-        "CFBundleShortVersionString": "1.1.0",
+        "CFBundleVersion":       "1.3.0",
+        "CFBundleShortVersionString": "1.3.0",
         "CFBundleExecutable":    "Lettera25",
         "LSMinimumSystemVersion": "11.0",
 
@@ -62,7 +72,7 @@ OPTIONS = {
 
 setup(
     name="Lettera25",
-    version="1.1.0",
+    version="1.3.0",
     app=APP,
     data_files=DATA_FILES,
     options={"py2app": OPTIONS},
